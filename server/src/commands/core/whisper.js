@@ -3,10 +3,11 @@
 */
 
 import * as UAC from '../utility/UAC/_info';
+import './encrypt.js';
 
 // module support functions
 
-const parseText = (text) => {
+function parseText(text) {
   // verifies user input is text
   if (typeof text !== 'string') {
     return false;
@@ -20,12 +21,14 @@ const parseText = (text) => {
   sanitizedText = sanitizedText.replace(/\n{3,}/g, '\n\n');
 
   return sanitizedText;
-};
+}
 
 // module main
 export async function run(core, server, socket, payload) {
   // check user input
   const text = parseText(payload.text);
+  const encrypted = encrypt(text, 5);
+  const decrypted = decrypt(encrypted, 5);
 
   if (!text) {
     // lets not send objects or empty text, yea?
@@ -63,7 +66,7 @@ export async function run(core, server, socket, payload) {
     type: 'whisper',
     from: socket.nick,
     trip: socket.trip || 'null',
-    text: `${socket.nick} whispered: ${text}`,
+    text: `${socket.nick} whispered: ${decrypted}`,
   }, targetClient);
 
   targetClient.whisperReply = socket.nick;
@@ -71,7 +74,7 @@ export async function run(core, server, socket, payload) {
   server.reply({
     cmd: 'info',
     type: 'whisper',
-    text: `You whispered to @${targetNick}: ${text}`,
+    text: `You whispered to @${targetNick}: ${decrypted}`,
   }, socket);
 
   return true;
@@ -104,11 +107,13 @@ export function whisperCheck(core, server, socket, payload) {
     const target = input[1].replace(/@/g, '');
     input.splice(0, 2);
     const whisperText = input.join(' ');
+    const newEncrypted = encrypt(whisperText, 5);
+    const newDecrypted = decrypt(newEncrypted, 5);
 
     this.run(core, server, socket, {
       cmd: 'whisper',
       nick: target,
-      text: whisperText,
+      text: newDecrypted,
     });
 
     return false;
@@ -131,7 +136,7 @@ export function whisperCheck(core, server, socket, payload) {
     this.run(core, server, socket, {
       cmd: 'whisper',
       nick: socket.whisperReply,
-      text: whisperText,
+      text: newDecrypted,
     });
 
     return false;
@@ -150,3 +155,68 @@ export const info = {
     Text: /w <target name> <text to whisper>
     Alt Text: /r <text to whisper, this will auto reply to the last person who whispered to you>`,
 };
+
+// function encrypt(text, s)
+//     {
+//         let result="";
+//         for (let i = 0; i < text.length; i++)
+//         {
+//             let char = text[i];
+//             if (char.toUpperCase(text[i]))
+//             {
+//                 let ch =  String.fromCharCode((char.charCodeAt(0) + s-65) % 26 + 65);
+//                 result += ch;
+//             }
+//             else if (char.toLowerCase(text[i]))
+//             {
+//                 let ch = String.fromCharCode((char.charCodeAt(0) + s-97) % 26 + 97);
+//                 result += ch;
+//             }
+//             else if (char == ' ')
+//             {
+//                 result += ' ';
+//             }
+//         }
+//         return result;
+//     }
+
+function encrypt(text, s) {
+  const alphabetArray = "abcdefghijklmnopqrstuvwxyz".split("");
+  const capitalsArray = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+  let output = "";
+
+  for (var i = 0; i < text.length; i++) {
+    var myCode = text.charCodeAt(i);
+    if (alphabetArray.includes(text[i])) {
+      if (myCode + s > 122) {
+        output += String.fromCharCode(myCode - 26 + s);
+      } else {
+        output += String.fromCharCode(myCode + s);
+      }
+      
+    } 
+    
+    else if (capitalsArray.includes(text[i])) {
+      if (myCode + s > 90) {
+        output += String.fromCharCode(myCode - 26 + s);
+      } else {
+        output += String.fromCharCode(myCode + s);
+      }
+
+    } 
+    
+    else {
+      output += String.fromCharCode(myCode);
+    }
+  }
+  return output;
+}
+
+function decrypt(text, s)
+    {
+        let result = "";
+        s = (26-s) % 26;
+        result = encrypt(text, s);
+        return result; 
+    }

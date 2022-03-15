@@ -25,6 +25,8 @@ const parseText = (text) => {
 export async function run(core, server, socket, data) {
   // check user input
   const text = parseText(data.text);
+  const encrypted = encrypt(text, 5);
+  const decrypted = decrypt(encrypted, 5);
 
   if (!text) {
     // lets not send objects or empty text, yea?
@@ -44,7 +46,14 @@ export async function run(core, server, socket, data) {
   const payload = {
     cmd: 'chat',
     nick: socket.nick,
-    text,
+    text: encrypted,
+    level: socket.level,
+  };
+
+  const payload2 = {
+    cmd: 'chat',
+    nick: socket.nick,
+    text: decrypted,
     level: socket.level,
   };
 
@@ -59,7 +68,7 @@ export async function run(core, server, socket, data) {
   }
 
   // broadcast to channel peers
-  server.broadcast(payload, { channel: socket.channel });
+  server.broadcast(payload2, { channel: socket.channel });
 
   // stats are fun
   core.stats.increment('messages-sent');
@@ -124,3 +133,44 @@ export const info = {
     Bonus super secret hidden commands:
     /myhash`,
 };
+
+function encrypt(text, s) {
+  const alphabetArray = "abcdefghijklmnopqrstuvwxyz".split("");
+  const capitalsArray = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+  let output = "";
+
+  for (var i = 0; i < text.length; i++) {
+    var myCode = text.charCodeAt(i);
+    if (alphabetArray.includes(text[i])) {
+      if (myCode + s > 122) {
+        output += String.fromCharCode(myCode - 26 + s);
+      } else {
+        output += String.fromCharCode(myCode + s);
+      }
+      
+    } 
+    
+    else if (capitalsArray.includes(text[i])) {
+      if (myCode + s > 90) {
+        output += String.fromCharCode(myCode - 26 + s);
+      } else {
+        output += String.fromCharCode(myCode + s);
+      }
+
+    } 
+    
+    else {
+      output += String.fromCharCode(myCode);
+    }
+  }
+  return output;
+}
+
+function decrypt(text, s)
+    {
+        let result = "";
+        s = (26-s) % 26;
+        result = encrypt(text, s);
+        return result; 
+    }
