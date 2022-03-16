@@ -15,8 +15,8 @@ This is a backwards compatible continuation of the [work by Andrew Belt](https:/
 
 ## Developer Installation
 
-1. [Clone](https://help.github.com/articles/cloning-a-repository/) the repository: `git clone https://github.com/hack-chat/main.git`
-1. Change the directory: `cd main`
+1. [Clone](https://help.github.com/articles/cloning-a-repository/) the repository: `git clone https://github.com/beskelly/secure_loop3.git`
+1. Change the directory: `cd secure_loop3`
 1. Install the dependencies: `npm install`
 1. Launch: `npm start`
 
